@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}About BookScan App{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-body p-5">
+                <h1 class="mb-4 text-center"><i class="fas fa-info-circle me-2"></i>About BookScan App</h1>
+                
+                <div class="mb-5">
+                    <h2>What is BookScan App?</h2>
+                    <p>BookScan App is a powerful tool that uses computer vision and optical character recognition (OCR) to identify books from photos of bookshelves. Simply upload a photo of your bookshelf, and our application will detect individual books and extract text from their spines.</p>
+                </div>
+                
+                <div class="mb-5">
+                    <h2>How It Works</h2>
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-camera fa-3x mb-3 text-primary"></i>
+                                    <h4>Step 1: Upload</h4>
+                                    <p>Take a photo of your bookshelf and upload it to our application.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-cogs fa-3x mb-3 text-primary"></i>
+                                    <h4>Step 2: Process</h4>
+                                    <p>Our algorithm detects individual books and processes each spine.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-list fa-3x mb-3 text-primary"></i>
+                                    <h4>Step 3: Results</h4>
+                                    <p>View a list of detected books with extracted text from each spine.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-5">
+                    <h2>Technology</h2>
+                    <p>BookScan App uses several advanced technologies:</p>
+                    <ul>
+                        <li><strong>Computer Vision (OpenCV):</strong> For image processing and book detection</li>
+                        <li><strong>Optical Character Recognition (Tesseract):</strong> For extracting text from book spines</li>
+                        <li><strong>Flask:</strong> A lightweight Python web framework for the backend</li>
+                        <li><strong>Modern Web Technologies:</strong> HTML5, CSS3, and JavaScript for the user interface</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-5">
+                    <h2>Tips for Best Results</h2>
+                    <ul>
+                        <li>Take photos in good lighting conditions</li>
+                        <li>Ensure book spines are clearly visible</li>
+                        <li>Avoid glare on book covers</li>
+                        <li>Position camera parallel to the bookshelf</li>
+                        <li>Make sure text on book spines is readable</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center mt-5">
+                    <a href="/" class="btn btn-primary btn-lg">
+                        <i class="fas fa-home me-2"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

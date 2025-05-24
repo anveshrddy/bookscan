@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}BookScan App - Identify Books from Bookshelf Photos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card mb-4">
+            <div class="card-body text-center p-5">
+                <h1 class="mb-3"><i class="fas fa-book-open me-2"></i>BookScan App</h1>
+                <p class="lead mb-4">Upload a photo of your bookshelf and let our AI identify the books for you!</p>
+                
+                <div id="upload-container">
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <div class="upload-area mb-3" id="drop-area">
+                            <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                            <h4>Drag & Drop or Click to Upload</h4>
+                            <p class="text-muted">Supported formats: JPG, JPEG, PNG (Max: 16MB)</p>
+                            <input type="file" id="file-input" name="file" accept=".jpg,.jpeg,.png" class="d-none">
+                            <button type="button" id="browse-btn" class="btn btn-primary mt-3">
+                                <i class="fas fa-folder-open me-2"></i>Browse Files
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div id="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Processing your image... This may take a moment.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="results" class="card">
+            <div class="card-body">
+                <h2 class="card-title mb-4 text-center">Scan Results</h2>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Original Image</div>
+                            <div class="card-body p-0">
+                                <img id="original-image" class="img-fluid" alt="Original bookshelf image">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">Detected Books</div>
+                            <div class="card-body p-0">
+                                <img id="processed-image" class="img-fluid" alt="Processed image with detected books">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 class="mb-3">Identified Books (<span id="book-count">0</span>)</h3>
+                <div class="row" id="books-container">
+                    <!-- Book items will be added here dynamically -->
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button id="scan-another" class="btn btn-primary">
+                        <i class="fas fa-redo me-2"></i>Scan Another Bookshelf
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const uploadForm = document.getElementById('upload-form');
+        const uploadContainer = document.getElementById('upload-container');
+        const loadingIndicator = document.getElementById('loading');
+        const resultsContainer = document.getElementById('results');
+        const scanAnotherBtn = document.getElementById('scan-another');
+        const originalImage = document.getElementById('original-image');
+        const processedImage = document.getElementById('processed-image');
+        const booksContainer = document.getElementById('books-container');
+        const bookCount = document.getElementById('book-count');
+        
+        // Handle browse button click
+        browseBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                handleFiles(fileInput.files);
+            }
+        });
+        
+        // Handle drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('bg-light');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('bg-light');
+        }
+        
+        dropArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+        
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Check file type
+                const fileType = file.type;
+                if (!['image/jpeg', 'image/jpg', 'image/png'].includes(fileType)) {
+                    alert('Please upload a valid image file (JPG, JPEG, or PNG).');
+                    return;
+                }
+                
+                // Check file size (max 16MB)
+                if (file.size > 16 * 1024 * 1024) {
+                    alert('File size exceeds the maximum limit of 16MB.');
+                    return;
+                }
+                
+                uploadFile(file);
+            }
+        }
+        
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Show loading indicator
+            uploadContainer.style.display = 'none';
+            loadingIndicator.style.display = 'block';
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Something went wrong');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                displayResults(data);
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                // Hide loading indicator and show upload form again
+                loadingIndicator.style.display = 'none';
+                uploadContainer.style.display = 'block';
+            });
+        }
+        
+        function displayResults(data) {
+            // Hide loading indicator
+            loadingIndicator.style.display = 'none';
+            
+            // Show results container
+            resultsContainer.style.display = 'block';
+            
+            // Set images
+            originalImage.src = '/' + data.originalImage;
+            processedImage.src = '/' + data.visualizationPath;
+            
+            // Update book count
+            bookCount.textContent = data.books.length;
+            
+            // Clear previous books
+            booksContainer.innerHTML = '';
+            
+            // Add book items
+            data.books.forEach((book, index) => {
+                const bookItem = document.createElement('div');
+                bookItem.className = 'col-md-6 col-lg-4 mb-3';
+                bookItem.innerHTML = `
+                    <div class="card book-item h-100">
+                        <div class="card-header bg-primary text-white">
+                            Book #${index + 1}
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">${book.text || 'No text detected'}</p>
+                        </div>
+                    </div>
+                `;
+                booksContainer.appendChild(bookItem);
+            });
+            
+            // If no books were found
+            if (data.books.length === 0) {
+                const noBooks = document.createElement('div');
+                noBooks.className = 'col-12 text-center';
+                noBooks.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No books were detected in this image. Try uploading a clearer image of your bookshelf.
+                    </div>
+                `;
+                booksContainer.appendChild(noBooks);
+            }
+        }
+        
+        // Handle "Scan Another" button click
+        scanAnotherBtn.addEventListener('click', function() {
+            resultsContainer.style.display = 'none';
+            uploadContainer.style.display = 'block';
+            fileInput.value = '';
+        });
+    });
+</script>
+{% endblock %}
